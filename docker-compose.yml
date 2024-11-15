@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    volumes:
+        - ./:/app
+    ports:
+    - "8002:8002"
+    depends_on:
+      - db
+  db:
+    image: postgres
+    container_name: beacon_db
+    volumes:
+      - ./pgadmin/data:/var/lib/pgadmin/data
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: beacon
+      POSTGRES_USER: beacon
+      POSTGRES_PASSWORD: password
+      PGPASSWORD: password
+volumes:
+  db-data:
