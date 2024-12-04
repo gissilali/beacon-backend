@@ -17,12 +17,16 @@ type DockerContainer struct {
 }
 
 func main() {
+
+}
+
+func runDockerMonitor() {
 	// read docker ps
 	output, err := runDockerPs()
 	if err != nil {
 		log.Fatalf("error executing docker ps: %s\n", err)
 	}
-	// make it a object/struct
+	// make it an object/struct
 	dockerContainers := parseDockerContainers(string(output))
 	// save it into db
 	for i := 0; i < len(dockerContainers); i++ {
