@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"beacon.silali.com/internal/data"
+	"beacon.silali.com/internal/api/data"
 	"bytes"
 	"regexp"
 	"text/template"
@@ -17,7 +17,7 @@ type Validator struct {
 }
 
 var (
-	emailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
 type ValidationRule func(value string) bool

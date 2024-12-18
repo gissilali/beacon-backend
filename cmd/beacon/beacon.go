@@ -1,4 +1,4 @@
-package main
+package beacon
 
 import (
 	"encoding/json"
@@ -16,11 +16,7 @@ type DockerContainer struct {
 	Ports  string `json:"ports"`
 }
 
-func main() {
-
-}
-
-func runDockerMonitor() {
+func RunDockerMonitor() {
 	// read docker ps
 	output, err := runDockerPs()
 	if err != nil {

@@ -1,4 +1,4 @@
-package data
+package dtos
 
 type UserCredentials struct {
 	Email    string `json:"email"`
@@ -15,6 +15,6 @@ type LoginUserRequest struct {
 }
 
 type AuthTokens struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }

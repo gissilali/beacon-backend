@@ -12,3 +12,7 @@ run/api:
 .PHONEY: run/dev/api
 run/dev/api:
 	air
+
+.PHONY: run/install
+run/install:
+	go build -o ./bin/cli/ cmd/cli/install.go

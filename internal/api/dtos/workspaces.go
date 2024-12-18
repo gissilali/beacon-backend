@@ -1,4 +1,4 @@
-package data
+package dtos
 
 type Workspace struct {
 	ID    int64  `json:"id"`

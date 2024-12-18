@@ -1,4 +1,4 @@
-package data
+package dtos
 
 import (
 	"fmt"
@@ -8,11 +8,12 @@ import (
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	CreatedAt time.Time `json:"created_at"`
+	ID                 int64     `json:"id"`
+	Name               string    `json:"name"`
+	Email              string    `json:"email"`
+	Password           string    `json:"-"`
+	CreatedAt          time.Time `json:"created_at"`
+	CurrentWorkspaceID *int64    `json:"CurrentWorkspaceID"`
 }
 
 func (u *User) FromMapClaims(claims jwt.MapClaims) error {

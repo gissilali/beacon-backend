@@ -1,11 +1,10 @@
 package validator
 
 import (
-	"beacon.silali.com/internal/data"
-	"fmt"
+	"beacon.silali.com/internal/api/dtos"
 )
 
-func (v *Validator) ValidateRegisterUserRequest(request *data.RegisterUserRequest) {
+func (v *Validator) ValidateRegisterUserRequest(request *dtos.RegisterUserRequest) {
 	v.Check(len(request.Name) > 0, "name", "name is required")
 	v.Check(len(request.Email) > 0, "email", "email is required")
 	v.Check(len(request.Password) > 0, "password", "password is required")
@@ -13,8 +12,7 @@ func (v *Validator) ValidateRegisterUserRequest(request *data.RegisterUserReques
 	v.CheckWith(v.EmailExistsRule, request.Email, "email", "email {{.value}} already exists")
 }
 
-func (v *Validator) ValidateLoginUserRequest(request *data.LoginUserRequest) {
-	fmt.Println(len(request.Email), "Nzele")
+func (v *Validator) ValidateLoginUserRequest(request *dtos.LoginUserRequest) {
 	v.Check(len(request.Email) > 0, "email", "email is required")
 	v.Check(len(request.Password) > 0, "password", "password is required")
 	v.CheckWith(v.IsEmailRule, request.Email, "email", "email {{.value}} is invalid")
@@ -22,7 +20,7 @@ func (v *Validator) ValidateLoginUserRequest(request *data.LoginUserRequest) {
 }
 
 func (v *Validator) IsEmailRule(email string) bool {
-	return emailRX.MatchString(email)
+	return emailRegex.MatchString(email)
 }
 
 func (v *Validator) EmailExistsRule(email string) bool {

@@ -1,8 +1,10 @@
-package main
+package handlers
 
 import (
-	"beacon.silali.com/internal/data"
-	"beacon.silali.com/internal/validator"
+	"beacon.silali.com/internal/api/core"
+	"beacon.silali.com/internal/api/data"
+	"beacon.silali.com/internal/api/dtos"
+	"beacon.silali.com/internal/api/validator"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -12,35 +14,35 @@ import (
 	"time"
 )
 
-func (app *application) registerUserHandler(c echo.Context) error {
-	request := new(data.RegisterUserRequest)
+func RegisterUser(c echo.Context, app *core.AppContext) error {
+	request := new(dtos.RegisterUserRequest)
 
 	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorEnvelope{
-			Code:    ErrorCodeUnsupportedRequest,
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Code:    dtos.ErrorInvalidCredentials,
 			Message: fmt.Sprintf("%s", err),
 			Details: err,
 		})
 	}
 
-	v := validator.New(app.models)
+	v := validator.New(app.Models)
 	v.ValidateRegisterUserRequest(request)
 	if !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, ErrorEnvelope{
-			Code:    ErrorInvalidForm,
+		return c.JSON(http.StatusUnprocessableEntity, dtos.ErrorResponse{
+			Code:    dtos.ErrorInvalidForm,
 			Details: v.Errors,
 		})
 	}
 
-	newUser, err := app.models.User.Create(&data.User{
+	newUser, err := app.Models.User.Create(&dtos.User{
 		Name:     request.Name,
 		Email:    request.Email,
 		Password: request.Password,
 	})
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorEnvelope{
-			Code:    ErrorCodeUnsupportedRequest,
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Code:    dtos.ErrorCodeUnsupportedRequest,
 			Message: fmt.Sprintf("%s", err),
 			Details: err,
 		})
@@ -49,32 +51,32 @@ func (app *application) registerUserHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, newUser)
 }
 
-func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
-	request := new(data.LoginUserRequest)
+func LoginUser(c echo.Context, app *core.AppContext) error {
+	request := new(dtos.LoginUserRequest)
 	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorEnvelope{
-			Code:    ErrorCodeUnsupportedRequest,
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Code:    dtos.ErrorCodeUnsupportedRequest,
 			Message: fmt.Sprintf("%s", err),
 			Details: err,
 		})
 	}
 
-	v := validator.New(app.models)
+	v := validator.New(app.Models)
 
 	v.ValidateLoginUserRequest(request)
 
 	if !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, ErrorEnvelope{
-			Code:    ErrorInvalidForm,
+		return c.JSON(http.StatusUnprocessableEntity, dtos.ErrorResponse{
+			Code:    dtos.ErrorInvalidForm,
 			Details: v.Errors,
 		})
 	}
 
-	user, err := app.attemptAuth(request.Email, request.Password)
+	user, err := attemptAuth(request.Email, request.Password, app.Models.User)
 
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ErrorEnvelope{
-			Code:    ErrorInvalidCredentials,
+		return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+			Code:    dtos.ErrorInvalidCredentials,
 			Message: fmt.Sprintf("%s", err),
 		})
 	}
@@ -82,16 +84,16 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	tokens, issueTokenErr := issueToken(user)
 
 	if issueTokenErr != nil {
-		return c.JSON(http.StatusInternalServerError, &ErrorEnvelope{
-			Code:    "FAILED_TO_ISSUE_TOKEN",
+		return c.JSON(http.StatusInternalServerError, &dtos.ErrorResponse{
+			Code:    dtos.ErrorFailedToIssueTokens,
 			Message: fmt.Sprintf("Token issuance failed: %v", err),
 		})
 	}
 
-	saveTokenErr := app.models.AuthToken.Create(tokens.RefreshToken, user.ID)
+	saveTokenErr := app.Models.AuthToken.Create(tokens.RefreshToken, user.ID)
 	if saveTokenErr != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorEnvelope{
-			Code:    "FAILED_TO_SAVE_TOKEN",
+		return c.JSON(http.StatusInternalServerError, &dtos.ErrorResponse{
+			Code:    dtos.ErrorFailedToSaveTokens,
 			Message: fmt.Sprintf("Failed to save token: %v", err),
 		})
 	}
@@ -113,8 +115,8 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	})
 }
 
-func (app *application) attemptAuth(email string, password string) (*data.User, error) {
-	user, err := app.models.User.GetByEmail(email)
+func attemptAuth(email string, password string, userModel data.UserModel) (*dtos.User, error) {
+	user, err := userModel.GetByEmail(email)
 
 	if err != nil {
 		return nil, err
@@ -129,7 +131,7 @@ func (app *application) attemptAuth(email string, password string) (*data.User, 
 	return user, nil
 }
 
-func issueToken(user *data.User) (*data.AuthTokens, error) {
+func issueToken(user *dtos.User) (*dtos.AuthTokens, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user": user,
 	})
@@ -145,7 +147,7 @@ func issueToken(user *data.User) (*data.AuthTokens, error) {
 		return nil, refreshTokenErr
 	}
 
-	return &data.AuthTokens{
+	return &dtos.AuthTokens{
 		AccessToken:  tokenString,
 		RefreshToken: refreshToken,
 	}, nil

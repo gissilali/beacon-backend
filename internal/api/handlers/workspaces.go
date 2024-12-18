@@ -1,20 +1,21 @@
-package main
+package handlers
 
 import (
-	"beacon.silali.com/internal/data"
+	"beacon.silali.com/internal/api/core"
+	"beacon.silali.com/internal/api/dtos"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
-func (app *application) getWorkspacesHandler(c echo.Context) error {
-	user, err := app.currentUser(c)
+func GetWorkspaces(c echo.Context, app *core.AppContext) error {
+	user, err := app.CurrentUser(c)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("%s", err))
 	}
 
-	workspaces, workspaceErr := app.models.Workspace.GetUserWorkspaces(user.ID)
+	workspaces, workspaceErr := app.Models.Workspace.GetUserWorkspaces(user.ID)
 
 	if workspaceErr != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("%s", workspaceErr))
@@ -23,24 +24,24 @@ func (app *application) getWorkspacesHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, workspaces)
 }
 
-func (app *application) createWorkspaceHandler(c echo.Context) error {
-	request := new(data.CreateWorkspaceRequest)
+func CreateWorkspace(c echo.Context, app *core.AppContext) error {
+	request := new(dtos.CreateWorkspaceRequest)
 
 	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorEnvelope{
-			Code:    ErrorCodeUnsupportedRequest,
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Code:    dtos.ErrorCodeUnsupportedRequest,
 			Message: fmt.Sprintf("%s", err),
 			Details: err,
 		})
 	}
 
-	user, err := app.currentUser(c)
+	user, err := app.CurrentUser(c)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("%s", err))
 	}
 
-	workspaces, workspaceErr := app.models.Workspace.CreateWorkspace(user.ID, request.Name)
+	workspaces, workspaceErr := app.Models.Workspace.CreateWorkspace(user.ID, request.Name)
 	if workspaceErr != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("%s", err))
 	}

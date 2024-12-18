@@ -13,6 +13,7 @@ type Models struct {
 	User      UserModel
 	AuthToken AuthTokenModel
 	Workspace WorkspaceModel
+	AccessKey AccessKeyModel
 }
 
 func NewModel(db *sql.DB) Models {
@@ -20,5 +21,6 @@ func NewModel(db *sql.DB) Models {
 		User:      UserModel{DB: db},
 		AuthToken: AuthTokenModel{DB: db},
 		Workspace: WorkspaceModel{DB: db},
+		AccessKey: AccessKeyModel{DB: db},
 	}
 }

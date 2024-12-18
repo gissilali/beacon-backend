@@ -1,6 +1,7 @@
 package data
 
 import (
+	"beacon.silali.com/internal/api/dtos"
 	"database/sql"
 	"errors"
 )
@@ -9,7 +10,7 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-func (u *UserModel) Create(user *User) (*User, error) {
+func (u *UserModel) Create(user *dtos.User) (*dtos.User, error) {
 	err := user.HashPassword()
 	if err != nil {
 		return nil, err
@@ -34,9 +35,9 @@ func (u *UserModel) Delete() (UserModel, error) {
 	return UserModel{}, nil
 }
 
-func (u *UserModel) GetByEmail(email string) (*User, error) {
+func (u *UserModel) GetByEmail(email string) (*dtos.User, error) {
 	query := `SELECT id, name, email, created_at,password FROM users WHERE email = $1 LIMIT 1`
-	var user User
+	var user dtos.User
 	err := u.DB.QueryRow(query, email).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.Password)
 
 	if err != nil {
@@ -51,9 +52,9 @@ func (u *UserModel) GetByEmail(email string) (*User, error) {
 	return &user, err
 }
 
-func (u *UserModel) GetById(id int) (*User, error) {
+func (u *UserModel) GetById(id int) (*dtos.User, error) {
 	query := `SELECT id, name, email, created_at FROM users WHERE email = $1 LIMIT 1`
-	var user User
+	var user dtos.User
 	err := u.DB.QueryRow(query, id).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
 
 	if err != nil {
