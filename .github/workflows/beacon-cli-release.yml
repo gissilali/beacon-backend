@@ -46,7 +46,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/beacon
-          asset_name: beacon-${{ github.sha }}-linux-amd64
+          asset_name: beacon-${{ github.ref }}-linux-amd64
           asset_content_type: application/octet-stream
 
       - name: Upload install binary
@@ -56,5 +56,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/install
-          asset_name: install-${{ github.sha }}-linux-amd64
+          asset_name: install-${{ github.ref }}-linux-amd64
           asset_content_type: application/octet-stream
