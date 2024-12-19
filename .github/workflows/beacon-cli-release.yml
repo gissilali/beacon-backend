@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.*'  # This triggers the workflow for version tags like v1.0.0
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,6 +26,7 @@ jobs:
         run: |
           mkdir -p build
           go build -o ./bin/beacon ./cmd/beacon/beacon.go
+          go build -o ./bin/install ./cmd/beacon/install.go
 
       - name: Create release
         id: create_release
@@ -34,12 +39,22 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload release asset
+      - name: Upload beacon binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/beacon
-          asset_name: beacon-${{ github.ref_name }}-linux-amd64
+          asset_name: beacon-${{ github.sha }}-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload install binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/install
+          asset_name: install-${{ github.sha }}-linux-amd64
           asset_content_type: application/octet-stream
