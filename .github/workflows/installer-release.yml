@@ -21,7 +21,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir -p build
-          go build -o build/my-binary ./path/to/main
+          go build -o ./bin/install ./cmd/cli/install.go
 
       - name: Create release
         id: create_release
@@ -40,6 +40,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/my-binary
-          asset_name: my-binary-${{ github.ref_name }}-linux-amd64
+          asset_path: ./bin/install
+          asset_name: install-${{ github.ref_name }}-linux-amd64
           asset_content_type: application/octet-stream
