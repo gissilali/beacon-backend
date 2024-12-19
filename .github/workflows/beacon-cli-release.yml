@@ -17,6 +17,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set version
+        id: set_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -46,7 +50,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/beacon
-          asset_name: beacon-${{ github.ref }}-linux-amd64
+          asset_name: beacon-${{ env.VERSION }}-linux-amd64
           asset_content_type: application/octet-stream
 
       - name: Upload install binary
@@ -56,5 +60,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/install
-          asset_name: install-${{ github.ref }}-linux-amd64
+          asset_name: install-${{ env.VERSION }}-linux-amd64
           asset_content_type: application/octet-stream
