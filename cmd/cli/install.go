@@ -1,13 +1,11 @@
 package main
 
 import (
-	"beacon.silali.com/cmd/beacon"
-	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"time"
+	"os/exec"
 )
 
 type options struct {
@@ -26,27 +24,43 @@ func main() {
 
 	os.Setenv("ACCESS_KEY", options.accessKey)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// download the beacon executable
 
-	defer cancel()
+	// run the executable passing the API as an option
 
-	go startMonitor(ctx, 5*time.Second)
+	//get current working directory
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	<-ctx.Done()
+	//change directory to the binary location
+	err = os.Chdir(dir + "/beacon")
+
+	fmt.Println(dir + "/beacon")
+
+	// run the executable passing the API as an option
+	// Specify the binary you want to run (e.g., `ls` or any executable file)
+	binary := "./beacon"
+
+	// Specify any arguments the binary might require
+	args := []string{fmt.Sprintf("-key=%s", options.accessKey)}
+
+	// Create the command
+	cmd := exec.Command(binary, args...)
+
+	// Set the output to the standard output (stdout)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run the command
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Error running command: %v\n", err)
+	} else {
+		fmt.Println("Command executed successfully.")
+	}
 }
 
-func startMonitor(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			beacon.RunDockerMonitor()
-		case <-ctx.Done():
-			fmt.Println("Task stopped...")
-			return
-		}
-	}
+func downloadBinary() {
 
 }

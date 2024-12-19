@@ -1,11 +1,15 @@
-package beacon
+package main
 
 import (
+	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 type DockerContainer struct {
@@ -16,7 +20,51 @@ type DockerContainer struct {
 	Ports  string `json:"ports"`
 }
 
-func RunDockerMonitor() {
+type options struct {
+	accessKey string
+}
+
+func main() {
+	var options options
+
+	flag.StringVar(&options.accessKey, "key", "", "API Key")
+	flag.Parse()
+
+	if len(options.accessKey) == 0 {
+		log.Fatal("No access key provided")
+	}
+
+	os.Setenv("ACCESS_KEY", options.accessKey)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// download the beacon executable
+	// run the executable passing the API as an option
+
+	defer cancel()
+
+	go startMonitor(ctx, 5*time.Second)
+
+	<-ctx.Done()
+}
+
+func startMonitor(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			runDockerMonitor()
+		case <-ctx.Done():
+			fmt.Println("Task stopped...")
+			return
+		}
+	}
+
+}
+
+func runDockerMonitor() {
 	// read docker ps
 	output, err := runDockerPs()
 	if err != nil {
