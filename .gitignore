@@ -4,4 +4,3 @@ tmp/
 .env
 .idea/
 .vscode/
-cmd/cli/beacon
