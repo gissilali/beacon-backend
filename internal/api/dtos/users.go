@@ -13,7 +13,7 @@ type User struct {
 	Email              string    `json:"email"`
 	Password           string    `json:"-"`
 	CreatedAt          time.Time `json:"created_at"`
-	CurrentWorkspaceID *int64    `json:"CurrentWorkspaceID"`
+	CurrentWorkspaceID *int64    `json:"-"`
 }
 
 func (u *User) FromMapClaims(claims jwt.MapClaims) error {

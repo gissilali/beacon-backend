@@ -81,7 +81,7 @@ func LoginUser(c echo.Context, app *core.AppContext) error {
 		})
 	}
 
-	tokens, issueTokenErr := issueToken(user)
+	tokens, issueTokenErr := generateAuthTokens(user)
 
 	if issueTokenErr != nil {
 		return c.JSON(http.StatusInternalServerError, &dtos.ErrorResponse{
@@ -98,21 +98,25 @@ func LoginUser(c echo.Context, app *core.AppContext) error {
 		})
 	}
 
+	setAuthTokenCookie(c, tokens.AccessToken)
+
+	return c.JSON(http.StatusOK, envelope{
+		"user":         user,
+		"refreshToken": tokens.RefreshToken,
+		"expiresIn":    3600,
+	})
+}
+
+func setAuthTokenCookie(c echo.Context, accessToken string) {
 	cookie := new(http.Cookie)
 	cookie.Name = "auth_token"
-	cookie.Value = tokens.AccessToken
+	cookie.Value = accessToken
 	cookie.Expires = time.Now().Add(1 * time.Hour)
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	cookie.Secure = false
 
 	c.SetCookie(cookie)
-
-	return c.JSON(http.StatusOK, envelope{
-		"user":      user,
-		"tokens":    tokens,
-		"expiresIn": 3600,
-	})
 }
 
 func attemptAuth(email string, password string, userModel data.UserModel) (*dtos.User, error) {
@@ -131,7 +135,7 @@ func attemptAuth(email string, password string, userModel data.UserModel) (*dtos
 	return user, nil
 }
 
-func issueToken(user *dtos.User) (*dtos.AuthTokens, error) {
+func generateAuthTokens(user *dtos.User) (*dtos.AuthTokens, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user": user,
 	})
@@ -160,4 +164,55 @@ func generateRefreshToken() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(token), nil
+}
+
+func RefreshToken(c echo.Context, app *core.AppContext) error {
+	request := new(dtos.RefreshTokenRequest)
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.ErrorResponse{
+			Code:    dtos.ErrorCodeUnsupportedRequest,
+			Message: fmt.Sprintf("%s", err),
+			Details: err,
+		})
+	}
+
+	userID, _ := app.Models.AuthToken.ValidateRefreshToken(request.RefreshToken)
+	if userID != nil {
+		user, err := app.Models.User.GetById(*userID)
+
+		if err != nil {
+			app.Logger.Printf("ERR refreshToken %v", err)
+			return err
+		}
+
+		tokens, issueTokenErr := generateAuthTokens(user)
+
+		if issueTokenErr != nil {
+			return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+				Code:    dtos.ErrorGeneratingAuthTokens,
+				Message: "Cannot refresh token",
+			})
+		}
+
+		saveTokenErr := app.Models.AuthToken.Create(tokens.RefreshToken, user.ID)
+
+		if saveTokenErr != nil {
+			return c.JSON(http.StatusInternalServerError, &dtos.ErrorResponse{
+				Code:    dtos.ErrorFailedToSaveTokens,
+				Message: fmt.Sprintf("Failed to save token: %v", err),
+			})
+		}
+
+		setAuthTokenCookie(c, tokens.AccessToken)
+
+		return c.JSON(http.StatusOK, envelope{
+			"refreshToken": tokens.RefreshToken,
+			"expiresIn":    3600,
+		})
+	}
+
+	return c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{
+		Code:    dtos.ErrorInvalidRefreshToken,
+		Message: "Cannot refresh token",
+	})
 }

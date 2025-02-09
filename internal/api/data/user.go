@@ -53,7 +53,7 @@ func (u *UserModel) GetByEmail(email string) (*dtos.User, error) {
 }
 
 func (u *UserModel) GetById(id int) (*dtos.User, error) {
-	query := `SELECT id, name, email, created_at FROM users WHERE email = $1 LIMIT 1`
+	query := `SELECT id, name, email, created_at FROM users WHERE id = $1 LIMIT 1`
 	var user dtos.User
 	err := u.DB.QueryRow(query, id).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
 

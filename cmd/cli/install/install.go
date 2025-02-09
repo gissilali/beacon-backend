@@ -16,7 +16,7 @@ type options struct {
 func main() {
 	var options options
 
-	flag.StringVar(&options.accessKey, "key", "mayoo", "API Key")
+	flag.StringVar(&options.accessKey, "key", "", "API Key")
 	flag.Parse()
 
 	if len(options.accessKey) == 0 {
@@ -24,13 +24,11 @@ func main() {
 	}
 
 	homeDir, err := os.UserHomeDir()
-
 	if err != nil {
 		log.Fatal("Error:", err)
 	}
 
 	out, err := os.Create(fmt.Sprintf("%s/beacon", homeDir))
-
 	if err != nil {
 		log.Fatalf("Error creating file %s", err)
 	}

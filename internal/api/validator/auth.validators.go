@@ -16,7 +16,7 @@ func (v *Validator) ValidateLoginUserRequest(request *dtos.LoginUserRequest) {
 	v.Check(len(request.Email) > 0, "email", "email is required")
 	v.Check(len(request.Password) > 0, "password", "password is required")
 	v.CheckWith(v.IsEmailRule, request.Email, "email", "email {{.value}} is invalid")
-	v.CheckWith(v.EmailDoesNotExistRule, request.Email, "email", "email {{.value}} does not exist in our records")
+	v.CheckWith(v.EmailDoesNotExistRule, request.Email, "email", "These credentials do not match our records.")
 }
 
 func (v *Validator) IsEmailRule(email string) bool {

@@ -5,10 +5,15 @@ import (
 	"beacon.silali.com/internal/api/handlers"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func RegisterRoutes(app *core.AppContext) *echo.Echo {
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowCredentials: true,
+	}))
 
 	protectedRoutes := e.Group("")
 	protectedRoutes.Use(echojwt.WithConfig(echojwt.Config{
@@ -24,6 +29,9 @@ func RegisterRoutes(app *core.AppContext) *echo.Echo {
 	})
 	e.POST("/v1/auth/login", func(c echo.Context) error {
 		return handlers.LoginUser(c, app)
+	})
+	e.POST("/v1/auth/refresh", func(c echo.Context) error {
+		return handlers.RefreshToken(c, app)
 	})
 
 	protectedRoutes.GET("/v1/workspaces", func(c echo.Context) error {

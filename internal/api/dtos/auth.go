@@ -15,6 +15,14 @@ type LoginUserRequest struct {
 }
 
 type AuthTokens struct {
-	AccessToken  string `json:"accessToken"`
+	AccessToken  string `json:"-"`
 	RefreshToken string `json:"refreshToken"`
+}
+
+type RefreshToken struct {
+	UserID int
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string
 }

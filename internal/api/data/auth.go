@@ -16,7 +16,7 @@ func (model *AuthTokenModel) Create(refreshToken string, userId int64) error {
 	}
 
 	query := `INSERT INTO auth_tokens (user_id, refresh_token, expires_at) VALUES ($1, $2, $3) RETURNING user_id, refresh_token, expires_at`
-	expiresAt := time.Now().Add(14 * 24 * time.Hour)
+	expiresAt := time.Now().Add(1 * time.Hour)
 
 	var returnedUserId int64
 	var returnedRefreshToken string
@@ -40,4 +40,17 @@ func (model *AuthTokenModel) DeleteByUserID(userId int64) error {
 	}
 
 	return nil
+}
+
+// ValidateRefreshToken checks if the provided refresh token is valid and returns the associated user ID if valid
+func (model *AuthTokenModel) ValidateRefreshToken(refreshToken string) (*int, error) {
+	query := `SELECT user_id FROM auth_tokens WHERE refresh_token = $1 AND expires_at > CURRENT_TIMESTAMP LIMIT 1`
+	var userID int
+
+	err := model.DB.QueryRow(query, refreshToken).Scan(&userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userID, nil
 }

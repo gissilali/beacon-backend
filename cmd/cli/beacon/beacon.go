@@ -38,9 +38,6 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// download the beacon executable
-	// run the executable passing the API as an option
-
 	defer cancel()
 
 	go startMonitor(ctx, 5*time.Second)

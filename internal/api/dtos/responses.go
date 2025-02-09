@@ -6,6 +6,8 @@ const (
 	ErrorInvalidCredentials     = "INVALID_CREDENTIALS"
 	ErrorFailedToIssueTokens    = "FAILED_TO_ISSUE_TOKEN"
 	ErrorFailedToSaveTokens     = "FAILED_TO_SAVE_TOKEN"
+	ErrorInvalidRefreshToken    = "INVALID_REFRESH_TOKEN"
+	ErrorGeneratingAuthTokens   = "FAILED_TO_GENERATE_AUTH_TOKEN"
 )
 
 type Response map[string]interface{}
