@@ -44,19 +44,7 @@ jobs:
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/beacon-${{ matrix.platform }}-amd64 ./cmd/cli/beacon/beacon.go
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/install-${{ matrix.platform }}-amd64 ./cmd/cli/install/install.go
 
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if git rev-parse -q --verify "refs/tags/${{ github.ref }}" > /dev/null; then
-            echo "Tag already exists, skipping release creation."
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "Tag does not exist, proceeding with release creation."
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
-          fi
-
       - name: Create release
-        if: env.TAG_EXISTS == 'false'
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -67,22 +55,12 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Get release upload URL
-        if: env.TAG_EXISTS == 'true'
-        id: get_release
-        run: |
-          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref }}")
-          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.upload_url')
-          echo "UPLOAD_URL=${UPLOAD_URL}" >> $GITHUB_ENV
-
       - name: Upload beacon binary
-        if: env.TAG_EXISTS == 'false' && steps.create_release.outputs.upload_url || env.TAG_EXISTS == 'true' && env.UPLOAD_URL
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ env.TAG_EXISTS == 'false' && steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/beacon-${{ matrix.platform }}-amd64
           asset_name: beacon-${{ env.VERSION }}-${{ matrix.platform }}-amd64
           asset_content_type: application/octet-stream
