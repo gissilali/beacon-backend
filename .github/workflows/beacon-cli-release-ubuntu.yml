@@ -13,15 +13,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest]
         include:
-          - os: macos-latest
-            platform: darwin
-            goos: darwin
+          - os: ubuntu-latest
+            platform: linux
+            goos: linux
             goarch: amd64
-          - os: macos-latest
-            platform: darwin
-            goos: darwin
+          - os: ubuntu-latest
+            platform: linux
+            goos: linux
             goarch: arm64
 
     steps:
