@@ -23,6 +23,7 @@ func main() {
 		log.Fatal("No access key provided")
 	}
 
+	// emelina, bolambe.
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal("Error:", err)
@@ -35,7 +36,7 @@ func main() {
 
 	defer out.Close()
 
-	resp, err := http.Get("https://github.com/gissilali/beacon-backend/releases/download/v1.0.7/beacon-v1.0.7-linux-amd64")
+	resp, err := http.Get("https://github.com/gissilali/beacon-backend/releases/download/v1.1.7-darwin/beacon-darwin-amd64")
 
 	if err != nil {
 		log.Fatal("Ravisse....!")
