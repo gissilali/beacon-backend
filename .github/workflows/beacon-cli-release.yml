@@ -3,11 +3,10 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # This triggers the workflow for version tags like v1.0.0
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
   build:
@@ -20,85 +19,52 @@ jobs:
             platform: linux
             goos: linux
             goarch: amd64
+          - os: ubuntu-latest
+            platform: linux
+            goos: linux
+            goarch: arm64
           - os: macos-latest
             platform: darwin
             goos: darwin
             goarch: amd64
+          - os: macos-latest
+            platform: darwin
+            goos: darwin
+            goarch: arm64
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set version
-        id: set_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.23.2'
 
       - name: Build binaries
         run: |
           mkdir -p build
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/beacon-${{ matrix.platform }}-amd64 ./cmd/cli/beacon/beacon.go
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/install-${{ matrix.platform }}-amd64 ./cmd/cli/install/install.go
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/beacon-${{ matrix.platform }}-${{ matrix.goarch }} ./cmd/cli/beacon/beacon.go
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o ./bin/install-${{ matrix.platform }}-${{ matrix.goarch }} ./cmd/cli/install/install.go
 
-      - name: Check if tag exists
-        id: check_tag
+      - name: Delete existing tag and release (if exists)
         run: |
-          if git rev-parse -q --verify "refs/tags/${{ github.ref }}" > /dev/null; then
-            echo "Tag already exists, skipping release creation."
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
+          TAG=${{ github.ref_name }}
+          echo "Checking if release $TAG exists..."
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG exists. Deleting..."
+            gh release delete "$TAG" --yes || echo "Failed to delete release."
+            git push --delete origin "$TAG" || echo "Failed to delete tag."
           else
-            echo "Tag does not exist, proceeding with release creation."
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+            echo "No existing release for $TAG."
           fi
-
-      - name: Delete tag if exists
-        if: env.TAG_EXISTS == 'true'
-        id: delete_tag_if_exists
-        run: |
-            git push --delete origin ${{ github.ref }} || echo "Tag deletion failed or tag does not exist."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
-        if: env.TAG_EXISTS == 'false'
-        id: create_release
-        uses: actions/create-release@v1
+        run: gh release create ${{ github.ref_name }} ./bin/* --title "Release ${{ github.ref_name }}" --notes "Automated release for ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Get release upload URL
-        if: env.TAG_EXISTS == 'true'
-        id: get_release
-        run: |
-          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref }}")
-          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.upload_url')
-          echo "UPLOAD_URL=${UPLOAD_URL}" >> $GITHUB_ENV
-
-      - name: Upload beacon binary
-        if: env.TAG_EXISTS == 'false' && steps.create_release.outputs.upload_url || env.TAG_EXISTS == 'true' && env.UPLOAD_URL
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.TAG_EXISTS == 'false' && steps.create_release.outputs.upload_url || env.UPLOAD_URL }}
-          asset_path: ./bin/beacon-${{ matrix.platform }}-amd64
-          asset_name: beacon-${{ env.VERSION }}-${{ matrix.platform }}-amd64
-          asset_content_type: application/octet-stream
-
-      - name: Upload install binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/install-${{ matrix.platform }}-amd64
-          asset_name: install-${{ env.VERSION }}-${{ matrix.platform }}-amd64
-          asset_content_type: application/octet-stream
