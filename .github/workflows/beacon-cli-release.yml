@@ -55,6 +55,12 @@ jobs:
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
 
+      - name: Delete tag if exists
+        if: env.TAG_EXISTS == 'true'
+        id: delete_tag_if_exists
+        run: |
+            git push --delete origin ${{ github.ref }} || echo "Tag deletion failed or tag does not exist."
+
       - name: Create release
         if: env.TAG_EXISTS == 'false'
         id: create_release
